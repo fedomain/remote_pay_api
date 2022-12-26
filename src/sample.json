@@ -1,0 +1,22 @@
+{
+  "transaction1" : {
+     "amount" : "45.6",
+     "location" : "shanghai",
+     "vendor" : "Starbucks",
+     "id": 1
+  },
+  
+  "transaction2" : {
+     "amount" : "55",
+     "location" : "shanghai",
+     "vendor" : "KFC",
+     "id": 2
+  },
+  
+  "transaction3" : {
+     "amount" : "100",
+     "location" : "shanghai",
+     "vendor" : "Hungry Jacks",
+     "id": 3
+  }
+}
