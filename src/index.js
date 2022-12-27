@@ -100,7 +100,20 @@ const scanPaymentRequest = async (userid, amount, description, filename) => {
 
 // Top up credit for a single user
 const topupCredit = async (userid, amount) => {
-  return await executeQueryAsync("INSERT INTO TopUps (userId, amount) VALUES (UUID_TO_BIN(?),?)", [userid, parseFloat(amount)]);
+  let currentAmount = parseFloat(amount);
+
+  let response = await executeQueryAsync("INSERT INTO TopUps (userId, amount) VALUES (UUID_TO_BIN(?),?)", [userid, currentAmount]);
+
+  if (response.success && response.error == '') {
+    await executeQueryAsync("UPDATE Users SET Credit = Credit + ? WHERE userId = UUID_TO_BIN(?)", [currentAmount, userid]);
+  }
+
+  return response;
+}
+
+// Get all top ups by a user
+const getTopUps = async (userid) => {
+  return await executeQueryAsync("SELECT BIN_TO_UUID(topUpId) AS topUpId, BIN_TO_UUID(userId) AS userId, amount, currency, exchangeRate, amountInRmb, datetime FROM TopUps WHERE userId = UUID_TO_BIN(?) ORDER BY datetime DESC", [userid]);
 }
 
 
@@ -204,11 +217,24 @@ api.post('/scanPaymentRequest', async (req, res) => {
 })
 
 // Topup
-api.post('/topup', async (req, res) => {
+api.post('/topupCredit', async (req, res) => {
   console.log('\n\nPOST request received.');
   console.log(req.body);
 
   let response = await topupCredit(req.body.userid, req.body.amount);
+
+  console.log('\n\nPOST response');
+  console.log(response);
+
+  res.send(response);
+})
+
+// Top Ups
+api.post('/topups', async (req, res) => {
+  console.log('get transaction received.');
+  console.log(req.body);
+
+  let response = await getTopUps(req.body.userid);
 
   console.log('\n\nPOST response');
   console.log(response);
