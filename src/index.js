@@ -85,7 +85,7 @@ const checkLogin = async (username, password) => {
 
 // Register user
 const register = async (firstname, lastname, email, username, password) => {
-  return await executeQueryAsync("INSERT INTO Users (userId, firstName, lastName, email, username, password, datetime) VALUES (UUID_TO_BIN(UUID()),?,?,?,?,?, NOW())", [firstname, lastname, email, username, password]);
+  return await executeQueryAsync("INSERT INTO Users (firstName, lastName, email, username, password) VALUES (?,?,?,?,?)", [firstname, lastname, email, username, password]);
 }
 
 // Get all transactions by a user
@@ -95,7 +95,12 @@ const getTransactions = async (userid) => {
 
 // Get all transactions by a user
 const scanPaymentRequest = async (userid, amount, description, filename) => {
-  return await executeQueryAsync("INSERT INTO Transactions (transactionId, transactionTypeId, userId, amount, description, filename, datetime) VALUES (UUID_TO_BIN(UUID()),1, UUID_TO_BIN(?),?,?,?, NOW())", [userid, parseFloat(amount), description, filename]);
+  return await executeQueryAsync("INSERT INTO Transactions (transactionTypeId, userId, amount, description, filename) VALUES (1, UUID_TO_BIN(?),?,?,?)", [userid, parseFloat(amount), description, filename]);
+}
+
+// Top up credit for a single user
+const topupCredit = async (userid, amount) => {
+  return await executeQueryAsync("INSERT INTO TopUps (userId, amount) VALUES (UUID_TO_BIN(?),?)", [userid, parseFloat(amount)]);
 }
 
 
@@ -196,6 +201,19 @@ api.post('/scanPaymentRequest', async (req, res) => {
   });
 
   res.send({'success': true});
+})
+
+// Topup
+api.post('/topup', async (req, res) => {
+  console.log('\n\nPOST request received.');
+  console.log(req.body);
+
+  let response = await topupCredit(req.body.userid, req.body.amount);
+
+  console.log('\n\nPOST response');
+  console.log(response);
+
+  res.send(response);
 })
 
 
