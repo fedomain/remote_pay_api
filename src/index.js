@@ -5,6 +5,7 @@ const express = require('express');
 const formidable = require('formidable');
 const res = require('express/lib/response');
 const { v4: uuidv4 } = require('uuid');
+const braintree = require('braintree');
 //const { UCS2_UNICODE_CI } = require('mysql/lib/protocol/constants/charsets')
 
 // Create the connection to the MySQL database server
@@ -123,6 +124,15 @@ const getTopUps = async (userid) => {
  * 
  *******/
 
+// Braintree
+const gateway = new braintree.BraintreeGateway({
+  environment: braintree.Environment.Sandbox,
+  merchantId: 'qqs7pr8w92yy2vyg',
+  publicKey: 'vtmrmdctjskh6ddv',
+  privateKey: '6f4a7a24513d7728dfb364cd60980912'
+});
+
+
 // Express
 const api = express()
 
@@ -240,6 +250,39 @@ api.post('/topups', async (req, res) => {
   console.log(response);
 
   res.send(response);
+})
+
+// Payment
+api.post('/payment', async (req, res) => {
+  console.log('\n\nPOST payment request received.');
+  console.log(req.body);
+
+  // Use the payment method nonce here
+  const nonceFromTheClient = req.body.paymentMethodNonce;
+
+  // Create a new transaction for $10
+  const newTransaction = gateway.transaction.sale({
+    amount: parseFloat(req.body.amount),
+    paymentMethodNonce: nonceFromTheClient,
+    options: {
+      // This option requests the funds from the transaction
+      // once it has been authorized successfully
+      submitForSettlement: true
+    }
+  }, async (error, result) => {
+      if (result) {
+        let response = await topupCredit(req.body.userid, req.body.amount);
+
+        console.log('\n\nPOST payment response');
+        console.log(req.body.userid);
+        console.log(req.body.amount);
+        console.log(response);
+
+        res.send(result);
+      } else {
+        res.status(500).send(error);
+      }
+  });
 })
 
 
